@@ -7,6 +7,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var moment = require('moment');
 var plaid = require('plaid');
+var azuretables = require('./azure-tables.js');
 
 var APP_PORT = envvar.number('APP_PORT', 8000);
 var PLAID_CLIENT_ID = envvar.string('PLAID_CLIENT_ID', '5df2ee576c195a00122e4098');
@@ -56,6 +57,8 @@ var client = new plaid.Client(
   {version: '2019-05-29', clientApp: 'Plaid Quickstart'}
 );
 
+
+
 var app = express();
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
@@ -102,6 +105,12 @@ app.post('/get_access_token', function(request, response, next) {
     }
     ACCESS_TOKEN = tokenResponse.access_token;
     ITEM_ID = tokenResponse.item_id;
+    var PAYLOAD = [{
+      'ACCESS_TOKEN': ACCESS_TOKEN,
+      'ITEM_ID': ITEM_ID,
+      'TIMESTAMP': toString(Date.now()),
+    }];
+    ADD_TO_AZURE_TABLE(PAYLOAD, 'plaiditems', 'access_token', 'item_id');
     prettyPrintResponse(tokenResponse);
     response.json({
       access_token: ACCESS_TOKEN,
@@ -129,6 +138,8 @@ app.get('/transactions', function(request, response, next) {
       });
     } else {
       prettyPrintResponse(transactionsResponse);
+      var PAYLOAD = FLATTEN_OBJECT(transactionsResponse);
+      ADD_TO_AZURE_TABLE(PAYLOAD, 'plaiditems', 'transactions_transaction_id', 'transactions_account_id');
       response.json({error: null, transactions: transactionsResponse});
     }
   });
@@ -160,6 +171,8 @@ app.get('/balance', function(request, response, next) {
       });
     }
     prettyPrintResponse(balanceResponse);
+    var PAYLOAD = FLATTEN_OBJECT(balanceResponse);
+    ADD_TO_AZURE_TABLE(PAYLOAD, 'plaidbalances', 'accounts_account_id', 'item_item_id');
     response.json({error: null, balance: balanceResponse});
   });
 });

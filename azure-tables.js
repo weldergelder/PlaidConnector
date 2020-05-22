@@ -1,20 +1,5 @@
 var AzureStorage = require('azure-storage');
 
-CONNECT_TO_AZURE_TABLES = function() {
-    var tableService = AzureStorage.createTableService('plaidstore', 'r0cJk7eHwyPjp1t0uOVgmr3zyFzJG2R5rliYyO41lNph1ySoL/08GwHeusf20R60H9bWDj5WftnejMHYRaC+jQ==');
-    console.log('Tracing 1: Table Service Connection Created');
-    tableService.createTableIfNotExists('PlaidTransactionDataDump', function(error, result, response){
-        if(!error){
-            console.log('Tracing 2: accounts table is now available');
-            console.log(result.created);
-            console.log(response);
-        } else {
-            console.log('Tracing 2: error while verifying table creation');
-            console.log(response);
-        }
-    });
-};
-
 FLATTEN_OBJECT = function(_input) {
 	var toReturn = {};
 	
@@ -35,49 +20,40 @@ FLATTEN_OBJECT = function(_input) {
 	return toReturn;
 };
 
-ADD_TO_AZURE_TABLE = function(_items){
+ADD_TO_AZURE_TABLE = function(_items, _table, _rowkey, _partitionkey){
     var items = [];
     var entGen = AzureStorage.TableUtilities.entityGenerator;
-    console.log(_items.length);
     if(_items){
         Array.prototype.forEach.call(_items, item => {
-            var PartitionKey = entGen.String(item.account_id);
-            if(item.transaction_id){
-                var RowKey = entGen.String(item.transaction_id);
-            } else {
-                var RowKey = entGen.String(item.account_id);
-            }
-            console.log('BEFORE\n');
-            console.log(item);
+            var PartitionKey = entGen.String(item[_partitionkey]);
+            var RowKey = entGen.String(item[_rowkey]);
             item = FLATTEN_OBJECT(item);
-            Object.keys(item).forEach((property) => {
-                item[property] = entGen.String(item[property]);
-            });
+            Object.keys(item).forEach((property) => { item[property] = entGen.String(item[property]); });
             item.PartitionKey = PartitionKey;
             item.RowKey = RowKey;
             items.push(item);
-            console.log(item);
         });
     }
     var size = items.length;
     console.log('About to transmit ' + size + ' records to Azure Tables');
     Array.prototype.forEach.call(items, item => {
-        ADD_RECORD(item, 'PlaidTransactionDataDump');  
+        ADD_RECORD(item, _table);  
     });
     
 };
 
 ADD_RECORD = function(_payload, _table) {
-    console.log(_payload.PartitionKey);
-    console.log(_payload.RowKey);
     var tableService = AzureStorage.createTableService('plaidstore', 'r0cJk7eHwyPjp1t0uOVgmr3zyFzJG2R5rliYyO41lNph1ySoL/08GwHeusf20R60H9bWDj5WftnejMHYRaC+jQ==');
-    tableService.insertEntity(_table, _payload, function(error, result, response) {
+    tableService.createTableIfNotExists(_table, function(error, result, response){
         if(!error){
-            console.log('entity added successfully');
-            console.log(result);
-        } else {
-            console.log(error);
-            
-        }
+            tableService.insertEntity(_table, _payload, function(error, result, response) {
+                if(!error){
+                    console.log('entity added successfully');
+                    console.log(result);
+                } else {
+                    console.log(error);
+                }
+            });
+        };
     });
-};
+}    
