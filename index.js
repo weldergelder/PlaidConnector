@@ -9,9 +9,9 @@ var moment = require('moment');
 var plaid = require('plaid');
 
 var APP_PORT = envvar.number('APP_PORT', 8000);
-var PLAID_CLIENT_ID = envvar.string('PLAID_CLIENT_ID');
-var PLAID_SECRET = envvar.string('PLAID_SECRET');
-var PLAID_PUBLIC_KEY = envvar.string('PLAID_PUBLIC_KEY');
+var PLAID_CLIENT_ID = envvar.string('PLAID_CLIENT_ID', '5df2ee576c195a00122e4098');
+var PLAID_SECRET = envvar.string('PLAID_SECRET', 'b90af183e4ffd87f4eda47e5fdc26b');
+var PLAID_PUBLIC_KEY = envvar.string('PLAID_PUBLIC_KEY', 'ee2abd47b4bf61f18e08993ba9f48a');
 var PLAID_ENV = envvar.string('PLAID_ENV', 'sandbox');
 // PLAID_PRODUCTS is a comma-separated list of products to use when initializing
 // Link. Note that this list must contain 'assets' in order for the app to be
