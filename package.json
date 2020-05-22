@@ -11,6 +11,7 @@
   "repository": "https://github.com/plaid/quickstart",
   "license": "ISC",
   "dependencies": {
+    "azure-storage": "^2.10.3",
     "body-parser": "1.18.x",
     "ejs": "2.5.x",
     "envvar": "1.1.x",
